@@ -73,7 +73,7 @@
     <!-- Summary Stats Row -->
     <div class="grid grid-cols-3 gap-3 sm:gap-5">
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Bales</p>
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Unique Bales</p>
         <p id="statTotalBales" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">0</p>
       </div>
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
@@ -116,7 +116,7 @@
       <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
         <div>
           <h2 class="text-base font-semibold text-slate-900">Quick Manual Entry</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Add a single bale directly to your live synced database.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Add a single item or add another item to an existing Bale Number.</p>
         </div>
 
         <form id="manualForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -152,9 +152,10 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-base font-bold text-indigo-700">Review & Edit Extracted Bales</h2>
-          <p class="text-xs text-slate-500">Verify extracted columns against your invoice pages below, then click Save All Bales.</p>
+          <p class="text-xs text-slate-500">Verify extracted columns below. Use "Merge Same Bales" to combine multiple items in one bale & sum Qty.</p>
         </div>
         <div class="flex flex-wrap gap-2">
+          <button id="mergeReviewBtn" class="text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-xl transition">Merge Same Bales & Sum Qty</button>
           <button id="addReviewRowBtn" class="text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl transition">+ Add Row</button>
           <button id="cancelReviewBtn" class="text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl transition">Cancel</button>
           <button id="saveReviewBtn" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition">Save All Bales</button>
@@ -198,14 +199,26 @@
 
     <!-- Stored Bales Inventory -->
     <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900">Stored Bales (<span id="filteredCount">0</span>)</h2>
-          <p class="text-xs text-slate-500">Real-time synced across all your phones, tablets, and computers.</p>
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">Stored Bales (<span id="filteredCount">0</span>)</h2>
+            <p class="text-xs text-slate-500">Real-time synced across all your devices.</p>
+          </div>
+
+          <!-- View Mode Toggle -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button id="viewGroupedBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 shadow-sm">
+              Single Bale (Total Qty)
+            </button>
+            <button id="viewAllBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+              All Items
+            </button>
+          </div>
         </div>
 
         <!-- Search & Filters -->
-        <div class="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
+        <div class="flex flex-col sm:flex-row gap-2.5 w-full xl:w-auto">
           <input id="searchInput" type="search" placeholder="Search bale, description, invoice..." class="w-full sm:w-64 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
           <select id="invoiceFilter" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-700 focus:bg-white focus:outline-none focus:border-indigo-500">
             <option value="">All Invoices</option>
@@ -223,7 +236,7 @@
             <tr>
               <th class="py-3 px-4">Bale No.</th>
               <th class="py-3 px-4">Description</th>
-              <th class="py-3 px-4">Qty / Mtrs</th>
+              <th id="qtyColHeader" class="py-3 px-4">Total Qty</th>
               <th class="py-3 px-4">Invoice No.</th>
               <th class="py-3 px-4">Supplier</th>
               <th class="py-3 px-4 text-right">Actions</th>
@@ -246,7 +259,7 @@
   <div id="editModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-slate-900">Edit Bale Record</h3>
+        <h3 class="text-base font-bold text-slate-900">Edit Bale Item</h3>
         <button id="closeEditModal" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
       </div>
       <form id="editForm" class="space-y-3">
@@ -301,6 +314,7 @@
 
     let db = null;
     let allBales = [];
+    let viewMode = "grouped"; // "grouped" (Single Bale + Total Qty) or "all"
 
     const missingFirebase = !cfg.firebase.apiKey || cfg.firebase.apiKey.includes("PASTE_YOUR");
     if (missingFirebase) {
@@ -339,6 +353,82 @@
       syncText.textContent = "Not Configured";
     }
 
+    // Smart Qty Summing Helper (e.g. "120 Mtrs" + "80.5 Mtrs" => "200.5 Mtrs")
+    function sumQuantities(qtyList) {
+      const unitTotals = {};
+      const fallback = [];
+
+      qtyList.forEach((raw) => {
+        const str = String(raw || "").trim();
+        if (!str) return;
+        const match = str.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+        if (match) {
+          const num = parseFloat(match[1]);
+          const unitRaw = match[2].trim();
+          const unitKey = unitRaw.toLowerCase();
+          if (!unitTotals[unitKey]) {
+            unitTotals[unitKey] = { total: 0, label: unitRaw };
+          }
+          unitTotals[unitKey].total += num;
+        } else {
+          fallback.push(str);
+        }
+      });
+
+      const parts = Object.values(unitTotals).map(({ total, label }) => {
+        const rounded = Math.round(total * 100) / 100;
+        return label ? `${rounded} ${label}` : `${rounded}`;
+      });
+
+      return [...parts, ...fallback].join(" + ");
+    }
+
+    // Group items sharing the same Bale Number
+    function groupBalesByNumber(records) {
+      const map = new Map();
+      records.forEach((item) => {
+        const key = (item.baleNumber || "").trim().toLowerCase() || `__no_bale_${item.id}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            baleNumber: item.baleNumber || "-",
+            items: [],
+            invoices: new Set(),
+            suppliers: new Set()
+          });
+        }
+        const grp = map.get(key);
+        grp.items.push(item);
+        if (item.invoiceNumber) grp.invoices.add(item.invoiceNumber);
+        if (item.supplier) grp.suppliers.add(item.supplier);
+      });
+
+      return [...map.values()].map((g) => ({
+        baleNumber: g.baleNumber,
+        items: g.items,
+        totalQty: sumQuantities(g.items.map((i) => i.quantity)),
+        invoiceText: [...g.invoices].join(", ") || "-",
+        supplierText: [...g.suppliers].join(", ") || "-"
+      }));
+    }
+
+    // View Mode Toggle
+    const viewGroupedBtn = document.getElementById("viewGroupedBtn");
+    const viewAllBtn = document.getElementById("viewAllBtn");
+    const qtyColHeader = document.getElementById("qtyColHeader");
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      const activeCls = "text-xs font-semibold px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 shadow-sm";
+      const idleCls = "text-xs font-semibold px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900";
+      viewGroupedBtn.className = mode === "grouped" ? activeCls : idleCls;
+      viewAllBtn.className = mode === "all" ? activeCls : idleCls;
+      qtyColHeader.textContent = mode === "grouped" ? "Total Qty" : "Qty / Mtrs";
+      renderBales();
+    }
+
+    viewGroupedBtn.addEventListener("click", () => setViewMode("grouped"));
+    viewAllBtn.addEventListener("click", () => setViewMode("all"));
+
     // Filters & Stats
     const searchInput = document.getElementById("searchInput");
     const invoiceFilter = document.getElementById("invoiceFilter");
@@ -349,10 +439,11 @@
     supplierFilter.addEventListener("change", renderBales);
 
     function updateStatsAndFilters() {
+      const uniqueBales = new Set(allBales.map((b) => (b.baleNumber || "").trim().toLowerCase()).filter(Boolean));
       const invoices = [...new Set(allBales.map((b) => b.invoiceNumber).filter(Boolean))].sort();
       const suppliers = [...new Set(allBales.map((b) => b.supplier).filter(Boolean))].sort();
 
-      document.getElementById("statTotalBales").textContent = allBales.length;
+      document.getElementById("statTotalBales").textContent = uniqueBales.size || allBales.length;
       document.getElementById("statTotalInvoices").textContent = invoices.length;
       document.getElementById("statTotalSuppliers").textContent = suppliers.length;
 
@@ -368,12 +459,12 @@
       supplierFilter.value = suppliers.includes(curSup) ? curSup : "";
     }
 
-    function renderBales() {
+    function getFilteredRecords() {
       const term = searchInput.value.trim().toLowerCase();
       const selInv = invoiceFilter.value;
       const selSup = supplierFilter.value;
 
-      const filtered = allBales.filter((b) => {
+      return allBales.filter((b) => {
         if (selInv && b.invoiceNumber !== selInv) return false;
         if (selSup && b.supplier !== selSup) return false;
         if (!term) return true;
@@ -381,55 +472,144 @@
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(term));
       });
+    }
 
-      document.getElementById("filteredCount").textContent = filtered.length;
-      document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
-
+    function renderBales() {
+      const filtered = getFilteredRecords();
       const desktopBody = document.getElementById("desktopTableBody");
       const mobileCards = document.getElementById("mobileCards");
       desktopBody.innerHTML = "";
       mobileCards.innerHTML = "";
 
-      filtered.forEach((b) => {
-        // Desktop Row
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="py-3.5 px-4 font-semibold text-indigo-700 whitespace-nowrap">${escapeHtml(b.baleNumber || "-")}</td>
-          <td class="py-3.5 px-4 text-slate-800">${escapeHtml(b.description || "-")}</td>
-          <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.quantity || "-")}</td>
-          <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.invoiceNumber || "-")}</td>
-          <td class="py-3.5 px-4 text-slate-500">${escapeHtml(b.supplier || "-")}</td>
-          <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-3">
-            <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
-            <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600 hover:text-rose-800">Delete</button>
-          </td>
-        `;
-        desktopBody.appendChild(tr);
+      if (viewMode === "grouped") {
+        const groups = groupBalesByNumber(filtered);
+        document.getElementById("filteredCount").textContent = `${groups.length} bales`;
+        document.getElementById("emptyState").classList.toggle("hidden", groups.length > 0);
 
-        // Mobile Card
-        const card = document.createElement("div");
-        card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2";
-        card.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <span class="inline-block text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-lg">
-              Bale: ${escapeHtml(b.baleNumber || "-")}
-            </span>
-            <div class="flex gap-3">
-              <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600">Edit</button>
-              <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600">Delete</button>
+        groups.forEach((g) => {
+          const isMulti = g.items.length > 1;
+          const descHtml = g.items.map((item) => `
+            <div class="flex items-center justify-between gap-2 ${isMulti ? "py-1 border-b border-slate-100 last:border-0" : ""}">
+              <span>
+                ${escapeHtml(item.description || "-")}
+                ${isMulti && item.quantity ? `<span class="text-xs text-slate-400 ml-1">(${escapeHtml(item.quantity)})</span>` : ""}
+              </span>
+              ${isMulti ? `
+                <span class="flex-shrink-0 space-x-2">
+                  <button data-id="${item.id}" class="edit-btn text-[11px] font-medium text-indigo-600 hover:underline">Edit</button>
+                  <button data-id="${item.id}" class="del-btn text-[11px] font-medium text-rose-500 hover:underline">Del</button>
+                </span>
+              ` : ""}
             </div>
-          </div>
-          <p class="text-sm font-medium text-slate-800">${escapeHtml(b.description || "-")}</p>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pt-0.5">
-            ${b.quantity ? `<span>Qty: <strong class="text-slate-700">${escapeHtml(b.quantity)}</strong></span>` : ""}
-            ${b.invoiceNumber ? `<span>Inv: <strong class="text-slate-700">${escapeHtml(b.invoiceNumber)}</strong></span>` : ""}
-            ${b.supplier ? `<span>Supplier: <strong class="text-slate-700">${escapeHtml(b.supplier)}</strong></span>` : ""}
-          </div>
-        `;
-        mobileCards.appendChild(card);
-      });
+          `).join("");
 
+          // Desktop Row
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50 transition align-top";
+          tr.innerHTML = `
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <div class="font-semibold text-indigo-700">${escapeHtml(g.baleNumber)}</div>
+              ${isMulti ? `<span class="inline-block mt-1 text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">${g.items.length} items</span>` : ""}
+            </td>
+            <td class="py-3.5 px-4 text-slate-800">${descHtml}</td>
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                ${escapeHtml(g.totalQty || "-")}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(g.invoiceText)}</td>
+            <td class="py-3.5 px-4 text-slate-500">${escapeHtml(g.supplierText)}</td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-3">
+              ${!isMulti ? `
+                <button data-id="${g.items[0].id}" class="edit-btn text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
+                <button data-id="${g.items[0].id}" class="del-btn text-xs font-medium text-rose-600 hover:text-rose-800">Delete</button>
+              ` : `
+                <button data-bale="${escapeHtml(g.baleNumber)}" class="del-bale-btn text-xs font-medium text-rose-600 hover:text-rose-800">Delete Bale</button>
+              `}
+            </td>
+          `;
+          desktopBody.appendChild(tr);
+
+          // Mobile Card
+          const card = document.createElement("div");
+          card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5";
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-lg">
+                  Bale: ${escapeHtml(g.baleNumber)}
+                </span>
+                ${isMulti ? `<span class="text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full">${g.items.length} items</span>` : ""}
+              </div>
+              <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
+                Total: ${escapeHtml(g.totalQty || "-")}
+              </span>
+            </div>
+            <div class="text-sm text-slate-800 bg-white border border-slate-200/80 rounded-lg px-3 py-2">
+              ${descHtml}
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 pt-0.5">
+              <div class="flex flex-wrap gap-x-3 gap-y-1">
+                ${g.invoiceText !== "-" ? `<span>Inv: <strong class="text-slate-700">${escapeHtml(g.invoiceText)}</strong></span>` : ""}
+                ${g.supplierText !== "-" ? `<span>Supplier: <strong class="text-slate-700">${escapeHtml(g.supplierText)}</strong></span>` : ""}
+              </div>
+              ${!isMulti ? `
+                <div class="flex gap-3">
+                  <button data-id="${g.items[0].id}" class="edit-btn font-medium text-indigo-600">Edit</button>
+                  <button data-id="${g.items[0].id}" class="del-btn font-medium text-rose-600">Delete</button>
+                </div>
+              ` : `
+                <button data-bale="${escapeHtml(g.baleNumber)}" class="del-bale-btn font-medium text-rose-600">Delete Bale</button>
+              `}
+            </div>
+          `;
+          mobileCards.appendChild(card);
+        });
+      } else {
+        // All Items View
+        document.getElementById("filteredCount").textContent = `${filtered.length} items`;
+        document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
+
+        filtered.forEach((b) => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50 transition";
+          tr.innerHTML = `
+            <td class="py-3.5 px-4 font-semibold text-indigo-700 whitespace-nowrap">${escapeHtml(b.baleNumber || "-")}</td>
+            <td class="py-3.5 px-4 text-slate-800">${escapeHtml(b.description || "-")}</td>
+            <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.quantity || "-")}</td>
+            <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.invoiceNumber || "-")}</td>
+            <td class="py-3.5 px-4 text-slate-500">${escapeHtml(b.supplier || "-")}</td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-3">
+              <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
+              <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600 hover:text-rose-800">Delete</button>
+            </td>
+          `;
+          desktopBody.appendChild(tr);
+
+          const card = document.createElement("div");
+          card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2";
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <span class="inline-block text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-lg">
+                Bale: ${escapeHtml(b.baleNumber || "-")}
+              </span>
+              <div class="flex gap-3">
+                <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600">Edit</button>
+                <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600">Delete</button>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-slate-800">${escapeHtml(b.description || "-")}</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pt-0.5">
+              ${b.quantity ? `<span>Qty: <strong class="text-slate-700">${escapeHtml(b.quantity)}</strong></span>` : ""}
+              ${b.invoiceNumber ? `<span>Inv: <strong class="text-slate-700">${escapeHtml(b.invoiceNumber)}</strong></span>` : ""}
+              ${b.supplier ? `<span>Supplier: <strong class="text-slate-700">${escapeHtml(b.supplier)}</strong></span>` : ""}
+            </div>
+          `;
+          mobileCards.appendChild(card);
+        });
+      }
+
+      // Wire Edit & Delete Actions
       document.querySelectorAll(".edit-btn").forEach((btn) => {
         btn.addEventListener("click", () => openEditModal(btn.dataset.id));
       });
@@ -437,8 +617,21 @@
       document.querySelectorAll(".del-btn").forEach((btn) => {
         btn.addEventListener("click", async () => {
           if (!db) return;
-          if (confirm("Delete this bale record?")) {
+          if (confirm("Delete this item?")) {
             await deleteDoc(doc(db, "bales", btn.dataset.id));
+          }
+        });
+      });
+
+      document.querySelectorAll(".del-bale-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!db) return;
+          const baleNo = btn.dataset.bale;
+          const matching = allBales.filter((b) => (b.baleNumber || "").trim().toLowerCase() === baleNo.trim().toLowerCase());
+          if (confirm(`Delete all ${matching.length} items inside Bale ${baleNo}?`)) {
+            for (const item of matching) {
+              await deleteDoc(doc(db, "bales", item.id));
+            }
           }
         });
       });
@@ -516,7 +709,6 @@
           ? await pdfToDataUrls(file)
           : [await fileToDataUrl(file)];
 
-        // Render page thumbnails
         previewThumbs.innerHTML = "";
         dataUrls.forEach((url, idx) => {
           const wrap = document.createElement("div");
@@ -606,6 +798,36 @@
       reviewTableBody.appendChild(tr);
     }
 
+    // Merge duplicate Bale Numbers in Review Table & Sum Qty
+    document.getElementById("mergeReviewBtn").addEventListener("click", () => {
+      const rows = [...reviewTableBody.querySelectorAll("tr")];
+      const merged = new Map();
+
+      rows.forEach((row, idx) => {
+        const baleNumber = row.querySelector(".r-bale").value.trim();
+        const description = row.querySelector(".r-desc").value.trim();
+        const quantity = row.querySelector(".r-qty").value.trim();
+        if (!baleNumber && !description) return;
+
+        const key = baleNumber ? baleNumber.toLowerCase() : `__empty_${idx}`;
+        if (!merged.has(key)) {
+          merged.set(key, { baleNumber, descriptions: [], quantities: [] });
+        }
+        const entry = merged.get(key);
+        if (description) entry.descriptions.push(quantity ? `${description} (${quantity})` : description);
+        if (quantity) entry.quantities.push(quantity);
+      });
+
+      reviewTableBody.innerHTML = "";
+      merged.forEach((entry) => {
+        addReviewRow({
+          baleNumber: entry.baleNumber,
+          description: entry.descriptions.join(" | "),
+          quantity: sumQuantities(entry.quantities)
+        });
+      });
+    });
+
     document.getElementById("addReviewRowBtn").addEventListener("click", () => addReviewRow({}));
     document.getElementById("cancelReviewBtn").addEventListener("click", () => reviewSection.classList.add("hidden"));
 
@@ -634,20 +856,35 @@
       reviewSection.classList.add("hidden");
     });
 
-    // Export CSV
+    // Export CSV (respects Single Bale vs All Items view)
     document.getElementById("exportCsvBtn").addEventListener("click", () => {
-      if (allBales.length === 0) return alert("No bales to export.");
-      const headers = ["Bale Number", "Description", "Qty / Meters", "Invoice Number", "Supplier"];
-      const rows = allBales.map((b) =>
-        [b.baleNumber, b.description, b.quantity, b.invoiceNumber, b.supplier]
-          .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
-          .join(",")
-      );
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) return alert("No bales to export.");
+
+      let headers, rows;
+      if (viewMode === "grouped") {
+        const groups = groupBalesByNumber(filtered);
+        headers = ["Bale Number", "Items Count", "Combined Descriptions", "Total Qty", "Invoice Number", "Supplier"];
+        rows = groups.map((g) => {
+          const desc = g.items.map((i) => i.quantity ? `${i.description} (${i.quantity})` : i.description).join(" | ");
+          return [g.baleNumber, g.items.length, desc, g.totalQty, g.invoiceText, g.supplierText]
+            .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
+            .join(",");
+        });
+      } else {
+        headers = ["Bale Number", "Description", "Qty / Meters", "Invoice Number", "Supplier"];
+        rows = filtered.map((b) =>
+          [b.baleNumber, b.description, b.quantity, b.invoiceNumber, b.supplier]
+            .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
+            .join(",")
+        );
+      }
+
       const csv = [headers.join(","), ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `baletrack-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `baletrack-${viewMode}-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
     });
 
