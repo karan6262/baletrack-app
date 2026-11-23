@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,74 +32,115 @@
   </script>
 </head>
 
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans antialiased">
   <!-- Top Header -->
-  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur border-b border-slate-800">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow">
-          BT
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
         </div>
         <div>
-          <h1 class="text-lg font-bold leading-tight">BaleTrack</h1>
-          <p class="text-xs text-slate-400">Multi-Device Invoice & Bale Manager</p>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">BaleTrack</h1>
+          <p class="text-xs text-slate-500">Multi-Device Invoice & Bale Manager</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <div id="syncBadge" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <div id="syncBadge" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600">
           <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
           <span id="syncText">Connecting...</span>
         </div>
-        <button id="exportCsvBtn" class="text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-1.5 rounded-lg transition">
-          Export CSV
+        <button id="exportCsvBtn" class="inline-flex items-center gap-1.5 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-2 rounded-xl shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
+          </svg>
+          <span>Export CSV</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
     <!-- Config Warning Banner -->
-    <div id="configWarning" class="hidden bg-amber-950/70 border border-amber-600/60 text-amber-200 rounded-xl p-4 text-sm">
-      <strong class="block text-amber-100 mb-1">Setup Needed:</strong>
+    <div id="configWarning" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-xl p-4 text-sm">
+      <strong class="block font-semibold mb-0.5">Setup Needed</strong>
       <span id="configWarningText"></span>
+    </div>
+
+    <!-- Summary Stats Row -->
+    <div class="grid grid-cols-3 gap-3 sm:gap-5">
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Bales</p>
+        <p id="statTotalBales" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Invoices</p>
+        <p id="statTotalInvoices" class="text-2xl sm:text-3xl font-bold text-indigo-600 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Suppliers</p>
+        <p id="statTotalSuppliers" class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">0</p>
+      </div>
     </div>
 
     <!-- Action Cards: PDF Upload & Manual Entry -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- AI PDF / Image Upload -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <div>
-          <h2 class="text-base font-semibold text-white">1. Scan Multi-Column PDF or Photo Invoice</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Upload a PDF invoice or take a photo. AI extracts Bale Numbers and Descriptions automatically.</p>
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">Scan Multi-Column PDF or Photo Invoice</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Upload a PDF invoice or snap a photo to extract Bale Numbers & Descriptions automatically.</p>
+          </div>
+          <span class="text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full">AI</span>
         </div>
 
-        <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 cursor-pointer transition bg-slate-950/50">
+        <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/40 rounded-2xl p-7 cursor-pointer transition bg-slate-50">
           <input id="fileInput" type="file" accept="application/pdf,image/*" class="hidden" />
-          <svg class="w-8 h-8 text-blue-400 mb-2" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
-          </svg>
-          <span class="text-sm font-medium text-slate-200">Tap to choose PDF or Invoice Photo</span>
-          <span id="fileNameLabel" class="text-xs text-slate-400 mt-1">Supports multi-page PDF, JPG, PNG</span>
+          <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+            </svg>
+          </div>
+          <span class="text-sm font-semibold text-slate-800">Click or tap to upload PDF / Invoice Photo</span>
+          <span id="fileNameLabel" class="text-xs text-slate-500 mt-1">Supports multi-page PDF, JPG, PNG</span>
         </label>
 
-        <div id="extractStatus" class="hidden text-sm text-blue-300 bg-blue-950/50 border border-blue-800/60 rounded-lg px-3 py-2"></div>
+        <div id="extractStatus" class="hidden text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5"></div>
       </section>
 
       <!-- Manual Entry -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
         <div>
-          <h2 class="text-base font-semibold text-white">2. Quick Manual Entry</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Add a single bale directly to your synced cloud database.</p>
+          <h2 class="text-base font-semibold text-slate-900">Quick Manual Entry</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Add a single bale directly to your live synced database.</p>
         </div>
 
         <form id="manualForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input id="mBaleNo" required placeholder="Bale Number *" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-          <input id="mInvoiceNo" placeholder="Invoice Number" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-          <input id="mDescription" required placeholder="Fabric / Item Description *" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-          <input id="mSupplier" placeholder="Supplier / Mill Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-          <input id="mQty" placeholder="Qty / Meters / Weight" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-          <button type="submit" class="sm:col-span-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg text-sm transition">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Bale Number *</label>
+            <input id="mBaleNo" required placeholder="e.g. BL-1042" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Invoice Number</label>
+            <input id="mInvoiceNo" placeholder="e.g. INV-2026-089" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Fabric / Item Description *</label>
+            <input id="mDescription" required placeholder="e.g. Suiting PV 60 inch Navy Blue" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Supplier / Mill</label>
+            <input id="mSupplier" placeholder="e.g. Raymond / Siyaram" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Qty / Meters / Weight</label>
+            <input id="mQty" placeholder="e.g. 240 Mtrs" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          </div>
+          <button type="submit" class="sm:col-span-2 mt-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm transition">
             + Save Bale Record
           </button>
         </form>
@@ -107,81 +148,149 @@
     </div>
 
     <!-- Review Extracted Data Section -->
-    <section id="reviewSection" class="hidden bg-slate-900 border border-blue-700/60 rounded-2xl p-5 space-y-4">
+    <section id="reviewSection" class="hidden bg-white border-2 border-indigo-200 rounded-2xl p-5 sm:p-6 shadow-md space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-base font-semibold text-blue-300">Review Extracted Bales</h2>
-          <p class="text-xs text-slate-400">Edit any field below before saving to your cloud database.</p>
+          <h2 class="text-base font-bold text-indigo-700">Review & Edit Extracted Bales</h2>
+          <p class="text-xs text-slate-500">Verify extracted columns against your invoice pages below, then click Save All Bales.</p>
         </div>
-        <div class="flex gap-2">
-          <button id="addReviewRowBtn" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg">+ Add Row</button>
-          <button id="cancelReviewBtn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">Cancel</button>
-          <button id="saveReviewBtn" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-1.5 rounded-lg">Save All Bales</button>
+        <div class="flex flex-wrap gap-2">
+          <button id="addReviewRowBtn" class="text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl transition">+ Add Row</button>
+          <button id="cancelReviewBtn" class="text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl transition">Cancel</button>
+          <button id="saveReviewBtn" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm transition">Save All Bales</button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <input id="revInvoiceNo" placeholder="Invoice Number" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
-        <input id="revSupplier" placeholder="Supplier Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
-        <input id="revDate" placeholder="Invoice Date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" />
+      <!-- Invoice Page Thumbnails -->
+      <div id="previewThumbs" class="flex gap-3 overflow-x-auto pb-2"></div>
+
+      <!-- Invoice Header Fields -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Invoice Number</label>
+          <input id="revInvoiceNo" placeholder="Invoice Number" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Supplier Name</label>
+          <input id="revSupplier" placeholder="Supplier Name" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Invoice Date</label>
+          <input id="revDate" placeholder="Invoice Date" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm" />
+        </div>
       </div>
 
+      <!-- Editable Rows Table -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
-          <thead class="text-xs uppercase text-slate-400 border-b border-slate-800">
+          <thead class="text-xs uppercase text-slate-500 bg-slate-50 border-y border-slate-200">
             <tr>
-              <th class="py-2 pr-2">Bale Number</th>
-              <th class="py-2 px-2">Description</th>
-              <th class="py-2 px-2">Qty / Meters</th>
-              <th class="py-2 pl-2 w-10"></th>
+              <th class="py-2.5 px-2">Bale Number</th>
+              <th class="py-2.5 px-2">Description</th>
+              <th class="py-2.5 px-2">Qty / Meters</th>
+              <th class="py-2.5 px-2 w-10"></th>
             </tr>
           </thead>
-          <tbody id="reviewTableBody" class="divide-y divide-slate-800"></tbody>
+          <tbody id="reviewTableBody" class="divide-y divide-slate-200"></tbody>
         </table>
       </div>
     </section>
 
     <!-- Stored Bales Inventory -->
-    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h2 class="text-base font-semibold text-white">Stored Bales (<span id="totalCount">0</span>)</h2>
-          <p class="text-xs text-slate-400">Live synced across all your devices.</p>
+          <h2 class="text-base font-semibold text-slate-900">Stored Bales (<span id="filteredCount">0</span>)</h2>
+          <p class="text-xs text-slate-500">Real-time synced across all your phones, tablets, and computers.</p>
         </div>
-        <input id="searchInput" type="search" placeholder="Search bale no, description, invoice, supplier..." class="w-full sm:w-80 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+
+        <!-- Search & Filters -->
+        <div class="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
+          <input id="searchInput" type="search" placeholder="Search bale, description, invoice..." class="w-full sm:w-64 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+          <select id="invoiceFilter" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-700 focus:bg-white focus:outline-none focus:border-indigo-500">
+            <option value="">All Invoices</option>
+          </select>
+          <select id="supplierFilter" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-700 focus:bg-white focus:outline-none focus:border-indigo-500">
+            <option value="">All Suppliers</option>
+          </select>
+        </div>
       </div>
 
       <!-- Desktop Table -->
-      <div class="hidden md:block overflow-x-auto">
+      <div class="hidden md:block overflow-x-auto border border-slate-200 rounded-xl">
         <table class="w-full text-sm text-left">
-          <thead class="text-xs uppercase text-slate-400 border-b border-slate-800">
+          <thead class="text-xs uppercase text-slate-500 bg-slate-50 border-b border-slate-200">
             <tr>
-              <th class="py-2.5 pr-3">Bale No.</th>
-              <th class="py-2.5 px-3">Description</th>
-              <th class="py-2.5 px-3">Qty / Mtrs</th>
-              <th class="py-2.5 px-3">Invoice No.</th>
-              <th class="py-2.5 px-3">Supplier</th>
-              <th class="py-2.5 pl-3 text-right">Action</th>
+              <th class="py-3 px-4">Bale No.</th>
+              <th class="py-3 px-4">Description</th>
+              <th class="py-3 px-4">Qty / Mtrs</th>
+              <th class="py-3 px-4">Invoice No.</th>
+              <th class="py-3 px-4">Supplier</th>
+              <th class="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="desktopTableBody" class="divide-y divide-slate-800/80"></tbody>
+          <tbody id="desktopTableBody" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
 
       <!-- Mobile Cards -->
       <div id="mobileCards" class="md:hidden space-y-3"></div>
 
-      <div id="emptyState" class="hidden text-center py-10 text-slate-400 text-sm">
-        No bale records found. Upload a PDF invoice or add one manually above.
+      <div id="emptyState" class="hidden text-center py-12 text-slate-400 text-sm">
+        No bale records match your filter. Upload a PDF invoice or add a bale manually above.
       </div>
     </section>
   </main>
+
+  <!-- Edit Bale Modal -->
+  <div id="editModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Edit Bale Record</h3>
+        <button id="closeEditModal" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+      </div>
+      <form id="editForm" class="space-y-3">
+        <input type="hidden" id="editId" />
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Bale Number</label>
+          <input id="editBaleNo" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Description</label>
+          <input id="editDescription" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Qty / Meters</label>
+            <input id="editQty" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Invoice Number</label>
+            <input id="editInvoiceNo" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Supplier</label>
+          <input id="editSupplier" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="cancelEditBtn" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Image Zoom Modal -->
+  <div id="zoomModal" class="hidden fixed inset-0 z-50 bg-slate-900/80 flex items-center justify-center p-4 cursor-pointer">
+    <img id="zoomImg" class="max-h-[90vh] max-w-[95vw] rounded-xl shadow-2xl border border-white/20" />
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
+      getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const cfg = window.APP_CONFIG;
@@ -196,7 +305,7 @@
     const missingFirebase = !cfg.firebase.apiKey || cfg.firebase.apiKey.includes("PASTE_YOUR");
     if (missingFirebase) {
       configWarning.classList.remove("hidden");
-      configWarningText.textContent = "Firebase config is missing at the top of index.html (multi-device sync won't work yet).";
+      configWarningText.textContent = "Paste your 6 Firebase config values at the top of index.html so your bales sync across devices.";
     }
 
     // Initialize Firebase
@@ -207,12 +316,13 @@
         db = getFirestore(app);
 
         await signInAnonymously(auth);
-        syncDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        syncDot.className = "w-2 h-2 rounded-full bg-emerald-500";
         syncText.textContent = "Cloud Synced";
 
         const q = query(collection(db, "bales"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
           allBales = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          updateStatsAndFilters();
           renderBales();
         }, (err) => {
           syncDot.className = "w-2 h-2 rounded-full bg-red-500";
@@ -229,19 +339,50 @@
       syncText.textContent = "Not Configured";
     }
 
-    // Render Bales List
+    // Filters & Stats
     const searchInput = document.getElementById("searchInput");
+    const invoiceFilter = document.getElementById("invoiceFilter");
+    const supplierFilter = document.getElementById("supplierFilter");
+
     searchInput.addEventListener("input", renderBales);
+    invoiceFilter.addEventListener("change", renderBales);
+    supplierFilter.addEventListener("change", renderBales);
+
+    function updateStatsAndFilters() {
+      const invoices = [...new Set(allBales.map((b) => b.invoiceNumber).filter(Boolean))].sort();
+      const suppliers = [...new Set(allBales.map((b) => b.supplier).filter(Boolean))].sort();
+
+      document.getElementById("statTotalBales").textContent = allBales.length;
+      document.getElementById("statTotalInvoices").textContent = invoices.length;
+      document.getElementById("statTotalSuppliers").textContent = suppliers.length;
+
+      const curInv = invoiceFilter.value;
+      const curSup = supplierFilter.value;
+
+      invoiceFilter.innerHTML = `<option value="">All Invoices (${invoices.length})</option>` +
+        invoices.map((i) => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join("");
+      supplierFilter.innerHTML = `<option value="">All Suppliers (${suppliers.length})</option>` +
+        suppliers.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+
+      invoiceFilter.value = invoices.includes(curInv) ? curInv : "";
+      supplierFilter.value = suppliers.includes(curSup) ? curSup : "";
+    }
 
     function renderBales() {
       const term = searchInput.value.trim().toLowerCase();
-      const filtered = allBales.filter((b) =>
-        [b.baleNumber, b.description, b.invoiceNumber, b.supplier, b.quantity]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(term))
-      );
+      const selInv = invoiceFilter.value;
+      const selSup = supplierFilter.value;
 
-      document.getElementById("totalCount").textContent = filtered.length;
+      const filtered = allBales.filter((b) => {
+        if (selInv && b.invoiceNumber !== selInv) return false;
+        if (selSup && b.supplier !== selSup) return false;
+        if (!term) return true;
+        return [b.baleNumber, b.description, b.invoiceNumber, b.supplier, b.quantity]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(term));
+      });
+
+      document.getElementById("filteredCount").textContent = filtered.length;
       document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
 
       const desktopBody = document.getElementById("desktopTableBody");
@@ -250,35 +391,47 @@
       mobileCards.innerHTML = "";
 
       filtered.forEach((b) => {
+        // Desktop Row
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40";
+        tr.className = "hover:bg-slate-50 transition";
         tr.innerHTML = `
-          <td class="py-3 pr-3 font-semibold text-blue-300">${escapeHtml(b.baleNumber || "-")}</td>
-          <td class="py-3 px-3 text-slate-200">${escapeHtml(b.description || "-")}</td>
-          <td class="py-3 px-3 text-slate-300">${escapeHtml(b.quantity || "-")}</td>
-          <td class="py-3 px-3 text-slate-300">${escapeHtml(b.invoiceNumber || "-")}</td>
-          <td class="py-3 px-3 text-slate-400">${escapeHtml(b.supplier || "-")}</td>
-          <td class="py-3 pl-3 text-right">
-            <button data-id="${b.id}" class="del-btn text-xs text-red-400 hover:text-red-300">Delete</button>
+          <td class="py-3.5 px-4 font-semibold text-indigo-700 whitespace-nowrap">${escapeHtml(b.baleNumber || "-")}</td>
+          <td class="py-3.5 px-4 text-slate-800">${escapeHtml(b.description || "-")}</td>
+          <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.quantity || "-")}</td>
+          <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(b.invoiceNumber || "-")}</td>
+          <td class="py-3.5 px-4 text-slate-500">${escapeHtml(b.supplier || "-")}</td>
+          <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-3">
+            <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
+            <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600 hover:text-rose-800">Delete</button>
           </td>
         `;
         desktopBody.appendChild(tr);
 
+        // Mobile Card
         const card = document.createElement("div");
-        card.className = "bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1.5";
+        card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2";
         card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-blue-300">Bale: ${escapeHtml(b.baleNumber || "-")}</span>
-            <button data-id="${b.id}" class="del-btn text-xs text-red-400">Delete</button>
+          <div class="flex items-center justify-between gap-2">
+            <span class="inline-block text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-lg">
+              Bale: ${escapeHtml(b.baleNumber || "-")}
+            </span>
+            <div class="flex gap-3">
+              <button data-id="${b.id}" class="edit-btn text-xs font-medium text-indigo-600">Edit</button>
+              <button data-id="${b.id}" class="del-btn text-xs font-medium text-rose-600">Delete</button>
+            </div>
           </div>
-          <p class="text-sm text-slate-100">${escapeHtml(b.description || "-")}</p>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 pt-1">
-            ${b.quantity ? `<span>Qty: ${escapeHtml(b.quantity)}</span>` : ""}
-            ${b.invoiceNumber ? `<span>Inv: ${escapeHtml(b.invoiceNumber)}</span>` : ""}
-            ${b.supplier ? `<span>Supplier: ${escapeHtml(b.supplier)}</span>` : ""}
+          <p class="text-sm font-medium text-slate-800">${escapeHtml(b.description || "-")}</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pt-0.5">
+            ${b.quantity ? `<span>Qty: <strong class="text-slate-700">${escapeHtml(b.quantity)}</strong></span>` : ""}
+            ${b.invoiceNumber ? `<span>Inv: <strong class="text-slate-700">${escapeHtml(b.invoiceNumber)}</strong></span>` : ""}
+            ${b.supplier ? `<span>Supplier: <strong class="text-slate-700">${escapeHtml(b.supplier)}</strong></span>` : ""}
           </div>
         `;
         mobileCards.appendChild(card);
+      });
+
+      document.querySelectorAll(".edit-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openEditModal(btn.dataset.id));
       });
 
       document.querySelectorAll(".del-btn").forEach((btn) => {
@@ -290,6 +443,37 @@
         });
       });
     }
+
+    // Edit Modal Logic
+    const editModal = document.getElementById("editModal");
+    function openEditModal(id) {
+      const bale = allBales.find((b) => b.id === id);
+      if (!bale) return;
+      document.getElementById("editId").value = bale.id;
+      document.getElementById("editBaleNo").value = bale.baleNumber || "";
+      document.getElementById("editDescription").value = bale.description || "";
+      document.getElementById("editQty").value = bale.quantity || "";
+      document.getElementById("editInvoiceNo").value = bale.invoiceNumber || "";
+      document.getElementById("editSupplier").value = bale.supplier || "";
+      editModal.classList.remove("hidden");
+    }
+
+    document.getElementById("closeEditModal").addEventListener("click", () => editModal.classList.add("hidden"));
+    document.getElementById("cancelEditBtn").addEventListener("click", () => editModal.classList.add("hidden"));
+
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!db) return;
+      const id = document.getElementById("editId").value;
+      await updateDoc(doc(db, "bales", id), {
+        baleNumber: document.getElementById("editBaleNo").value.trim(),
+        description: document.getElementById("editDescription").value.trim(),
+        quantity: document.getElementById("editQty").value.trim(),
+        invoiceNumber: document.getElementById("editInvoiceNo").value.trim(),
+        supplier: document.getElementById("editSupplier").value.trim()
+      });
+      editModal.classList.add("hidden");
+    });
 
     // Manual Form Submit
     document.getElementById("manualForm").addEventListener("submit", async (e) => {
@@ -308,11 +492,16 @@
       e.target.reset();
     });
 
-    // PDF / Image Extraction via Secure Vercel Backend (/api/extract)
+    // PDF / Image Extraction via /api/extract
     const fileInput = document.getElementById("fileInput");
     const extractStatus = document.getElementById("extractStatus");
     const reviewSection = document.getElementById("reviewSection");
     const reviewTableBody = document.getElementById("reviewTableBody");
+    const previewThumbs = document.getElementById("previewThumbs");
+    const zoomModal = document.getElementById("zoomModal");
+    const zoomImg = document.getElementById("zoomImg");
+
+    zoomModal.addEventListener("click", () => zoomModal.classList.add("hidden"));
 
     fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
@@ -323,11 +512,29 @@
       extractStatus.textContent = "Reading invoice pages...";
 
       try {
-        const base64Images = file.type === "application/pdf"
-          ? await pdfToImages(file)
-          : [await fileToBase64(file)];
+        const dataUrls = file.type === "application/pdf"
+          ? await pdfToDataUrls(file)
+          : [await fileToDataUrl(file)];
 
+        // Render page thumbnails
+        previewThumbs.innerHTML = "";
+        dataUrls.forEach((url, idx) => {
+          const wrap = document.createElement("div");
+          wrap.className = "flex-shrink-0 text-center";
+          wrap.innerHTML = `
+            <img src="${url}" alt="Page ${idx + 1}" class="h-24 w-auto rounded-lg border border-slate-300 shadow-sm cursor-zoom-in hover:border-indigo-500 transition" />
+            <span class="block text-[11px] text-slate-500 mt-1">Page ${idx + 1}</span>
+          `;
+          wrap.querySelector("img").addEventListener("click", () => {
+            zoomImg.src = url;
+            zoomModal.classList.remove("hidden");
+          });
+          previewThumbs.appendChild(wrap);
+        });
+
+        const base64Images = dataUrls.map((u) => u.split(",")[1]);
         extractStatus.textContent = `Analyzing ${base64Images.length} page(s) with AI...`;
+
         const extracted = await extractViaServer(base64Images);
 
         document.getElementById("revInvoiceNo").value = extracted.invoiceNumber || "";
@@ -340,6 +547,7 @@
 
         reviewSection.classList.remove("hidden");
         extractStatus.classList.add("hidden");
+        reviewSection.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch (err) {
         extractStatus.textContent = "Error: " + err.message;
       } finally {
@@ -347,11 +555,11 @@
       }
     });
 
-    async function pdfToImages(file) {
+    async function pdfToDataUrls(file) {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const images = [];
-      const maxPages = Math.min(pdf.numPages, 5);
+      const urls = [];
+      const maxPages = Math.min(pdf.numPages, 3);
 
       for (let i = 1; i <= maxPages; i++) {
         const page = await pdf.getPage(i);
@@ -360,15 +568,15 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-        images.push(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
+        urls.push(canvas.toDataURL("image/jpeg", 0.8));
       }
-      return images;
+      return urls;
     }
 
-    function fileToBase64(file) {
+    function fileToDataUrl(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onload = () => resolve(reader.result);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
@@ -389,10 +597,10 @@
     function addReviewRow(item = {}) {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="py-2 pr-2"><input class="r-bale w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.baleNumber || "")}" placeholder="Bale No." /></td>
-        <td class="py-2 px-2"><input class="r-desc w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.description || "")}" placeholder="Description" /></td>
-        <td class="py-2 px-2"><input class="r-qty w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.quantity || "")}" placeholder="Qty / Mtrs" /></td>
-        <td class="py-2 pl-2"><button class="r-del text-red-400 text-xs">✕</button></td>
+        <td class="py-2 px-2"><input class="r-bale w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm focus:bg-white" value="${escapeHtml(item.baleNumber || "")}" placeholder="Bale No." /></td>
+        <td class="py-2 px-2"><input class="r-desc w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm focus:bg-white" value="${escapeHtml(item.description || "")}" placeholder="Description" /></td>
+        <td class="py-2 px-2"><input class="r-qty w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm focus:bg-white" value="${escapeHtml(item.quantity || "")}" placeholder="Qty / Mtrs" /></td>
+        <td class="py-2 px-2 text-center"><button class="r-del text-rose-500 hover:text-rose-700 font-bold text-sm" title="Remove row">✕</button></td>
       `;
       tr.querySelector(".r-del").addEventListener("click", () => tr.remove());
       reviewTableBody.appendChild(tr);
