@@ -31,18 +31,38 @@ Combine multi-column details clearly into description if needed. Do not include 
       parts.push({ inline_data: { mime_type: "image/jpeg", data: b64 } });
     });
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
-      {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+    let data = null;
+    let lastError = "Gemini API error";
+
+    // Automatically retry up to 3 times if Google's servers are busy (503 / 429)
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents: [{ parts }] })
-      }
-    );
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || "Gemini API error" });
+      data = await response.json();
+
+      if (response.ok) {
+        lastError = null;
+        break;
+      }
+
+      lastError = data.error?.message || "Gemini API error";
+
+      // If server is busy (503) or rate-limited (429), wait 2 seconds and retry
+      if ((response.status === 503 || response.status === 429) && attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      return res.status(response.status).json({ error: lastError });
+    }
+
+    if (lastError) {
+      return res.status(503).json({ error: lastError });
     }
 
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
