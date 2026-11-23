@@ -6,18 +6,17 @@
   <title>BaleTrack — Multi-Device Bale & Invoice Manager</title>
 
   <!-- ===================================================================== -->
-  <!--  STEP 1: PASTE YOUR KEYS INSIDE THE QUOTES BELOW (DO NOT DELETE "")   -->
+  <!--  PASTE YOUR 6 FIREBASE VALUES INSIDE THE QUOTES BELOW                 -->
   <!-- ===================================================================== -->
   <script>
     window.APP_CONFIG = {
-
       firebase: {
         apiKey: "AIzaSyDB8IBYQ6wJgmi4CMvc2iPdJxNTmijB_2E",
-  authDomain: "baletrack-de9fc.firebaseapp.com",
-  projectId: "baletrack-de9fc",
-  storageBucket: "baletrack-de9fc.firebasestorage.app",
-  messagingSenderId: "937837236359",
-  appId: "1:937837236359:web:3ca28388a0241128baa822"
+        authDomain: "baletrack-de9fc.firebaseapp.com",
+        projectId: "baletrack-de9fc",
+        storageBucket: "baletrack-de9fc.firebasestorage.app",
+        messagingSenderId: "937837236359",
+        appId: "1:937837236359:web:3ca28388a0241128baa822"
       }
     };
   </script>
@@ -192,4 +191,265 @@
     const configWarningText = document.getElementById("configWarningText");
 
     let db = null;
-    let
+    let allBales = [];
+
+    const missingFirebase = !cfg.firebase.apiKey || cfg.firebase.apiKey.includes("PASTE_YOUR");
+    if (missingFirebase) {
+      configWarning.classList.remove("hidden");
+      configWarningText.textContent = "Firebase config is missing at the top of index.html (multi-device sync won't work yet).";
+    }
+
+    // Initialize Firebase
+    if (!missingFirebase) {
+      try {
+        const app = initializeApp(cfg.firebase);
+        const auth = getAuth(app);
+        db = getFirestore(app);
+
+        await signInAnonymously(auth);
+        syncDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        syncText.textContent = "Cloud Synced";
+
+        const q = query(collection(db, "bales"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+          allBales = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderBales();
+        }, (err) => {
+          syncDot.className = "w-2 h-2 rounded-full bg-red-500";
+          syncText.textContent = "Sync Error";
+          console.error(err);
+        });
+      } catch (err) {
+        syncDot.className = "w-2 h-2 rounded-full bg-red-500";
+        syncText.textContent = "Config Error";
+        alert("Firebase connection failed: " + err.message);
+      }
+    } else {
+      syncDot.className = "w-2 h-2 rounded-full bg-red-500";
+      syncText.textContent = "Not Configured";
+    }
+
+    // Render Bales List
+    const searchInput = document.getElementById("searchInput");
+    searchInput.addEventListener("input", renderBales);
+
+    function renderBales() {
+      const term = searchInput.value.trim().toLowerCase();
+      const filtered = allBales.filter((b) =>
+        [b.baleNumber, b.description, b.invoiceNumber, b.supplier, b.quantity]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(term))
+      );
+
+      document.getElementById("totalCount").textContent = filtered.length;
+      document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
+
+      const desktopBody = document.getElementById("desktopTableBody");
+      const mobileCards = document.getElementById("mobileCards");
+      desktopBody.innerHTML = "";
+      mobileCards.innerHTML = "";
+
+      filtered.forEach((b) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-800/40";
+        tr.innerHTML = `
+          <td class="py-3 pr-3 font-semibold text-blue-300">${escapeHtml(b.baleNumber || "-")}</td>
+          <td class="py-3 px-3 text-slate-200">${escapeHtml(b.description || "-")}</td>
+          <td class="py-3 px-3 text-slate-300">${escapeHtml(b.quantity || "-")}</td>
+          <td class="py-3 px-3 text-slate-300">${escapeHtml(b.invoiceNumber || "-")}</td>
+          <td class="py-3 px-3 text-slate-400">${escapeHtml(b.supplier || "-")}</td>
+          <td class="py-3 pl-3 text-right">
+            <button data-id="${b.id}" class="del-btn text-xs text-red-400 hover:text-red-300">Delete</button>
+          </td>
+        `;
+        desktopBody.appendChild(tr);
+
+        const card = document.createElement("div");
+        card.className = "bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1.5";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-blue-300">Bale: ${escapeHtml(b.baleNumber || "-")}</span>
+            <button data-id="${b.id}" class="del-btn text-xs text-red-400">Delete</button>
+          </div>
+          <p class="text-sm text-slate-100">${escapeHtml(b.description || "-")}</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 pt-1">
+            ${b.quantity ? `<span>Qty: ${escapeHtml(b.quantity)}</span>` : ""}
+            ${b.invoiceNumber ? `<span>Inv: ${escapeHtml(b.invoiceNumber)}</span>` : ""}
+            ${b.supplier ? `<span>Supplier: ${escapeHtml(b.supplier)}</span>` : ""}
+          </div>
+        `;
+        mobileCards.appendChild(card);
+      });
+
+      document.querySelectorAll(".del-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!db) return;
+          if (confirm("Delete this bale record?")) {
+            await deleteDoc(doc(db, "bales", btn.dataset.id));
+          }
+        });
+      });
+    }
+
+    // Manual Form Submit
+    document.getElementById("manualForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!db) return alert("Please add your Firebase config at the top of index.html first.");
+
+      await addDoc(collection(db, "bales"), {
+        baleNumber: document.getElementById("mBaleNo").value.trim(),
+        invoiceNumber: document.getElementById("mInvoiceNo").value.trim(),
+        description: document.getElementById("mDescription").value.trim(),
+        supplier: document.getElementById("mSupplier").value.trim(),
+        quantity: document.getElementById("mQty").value.trim(),
+        createdAt: serverTimestamp()
+      });
+
+      e.target.reset();
+    });
+
+    // PDF / Image Extraction via Secure Vercel Backend (/api/extract)
+    const fileInput = document.getElementById("fileInput");
+    const extractStatus = document.getElementById("extractStatus");
+    const reviewSection = document.getElementById("reviewSection");
+    const reviewTableBody = document.getElementById("reviewTableBody");
+
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById("fileNameLabel").textContent = file.name;
+      extractStatus.classList.remove("hidden");
+      extractStatus.textContent = "Reading invoice pages...";
+
+      try {
+        const base64Images = file.type === "application/pdf"
+          ? await pdfToImages(file)
+          : [await fileToBase64(file)];
+
+        extractStatus.textContent = `Analyzing ${base64Images.length} page(s) with AI...`;
+        const extracted = await extractViaServer(base64Images);
+
+        document.getElementById("revInvoiceNo").value = extracted.invoiceNumber || "";
+        document.getElementById("revSupplier").value = extracted.supplier || "";
+        document.getElementById("revDate").value = extracted.invoiceDate || "";
+
+        reviewTableBody.innerHTML = "";
+        (extracted.items || []).forEach((item) => addReviewRow(item));
+        if (!extracted.items || extracted.items.length === 0) addReviewRow({});
+
+        reviewSection.classList.remove("hidden");
+        extractStatus.classList.add("hidden");
+      } catch (err) {
+        extractStatus.textContent = "Error: " + err.message;
+      } finally {
+        fileInput.value = "";
+      }
+    });
+
+    async function pdfToImages(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const images = [];
+      const maxPages = Math.min(pdf.numPages, 5);
+
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.3 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        images.push(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
+      }
+      return images;
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function extractViaServer(base64Images) {
+      const res = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: base64Images })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Extraction failed");
+      return data;
+    }
+
+    function addReviewRow(item = {}) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="py-2 pr-2"><input class="r-bale w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.baleNumber || "")}" placeholder="Bale No." /></td>
+        <td class="py-2 px-2"><input class="r-desc w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.description || "")}" placeholder="Description" /></td>
+        <td class="py-2 px-2"><input class="r-qty w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-sm" value="${escapeHtml(item.quantity || "")}" placeholder="Qty / Mtrs" /></td>
+        <td class="py-2 pl-2"><button class="r-del text-red-400 text-xs">✕</button></td>
+      `;
+      tr.querySelector(".r-del").addEventListener("click", () => tr.remove());
+      reviewTableBody.appendChild(tr);
+    }
+
+    document.getElementById("addReviewRowBtn").addEventListener("click", () => addReviewRow({}));
+    document.getElementById("cancelReviewBtn").addEventListener("click", () => reviewSection.classList.add("hidden"));
+
+    document.getElementById("saveReviewBtn").addEventListener("click", async () => {
+      if (!db) return alert("Please add your Firebase config at the top of index.html first.");
+      const inv = document.getElementById("revInvoiceNo").value.trim();
+      const sup = document.getElementById("revSupplier").value.trim();
+      const rows = [...reviewTableBody.querySelectorAll("tr")];
+
+      for (const row of rows) {
+        const baleNumber = row.querySelector(".r-bale").value.trim();
+        const description = row.querySelector(".r-desc").value.trim();
+        const quantity = row.querySelector(".r-qty").value.trim();
+        if (!baleNumber && !description) continue;
+
+        await addDoc(collection(db, "bales"), {
+          baleNumber,
+          description,
+          quantity,
+          invoiceNumber: inv,
+          supplier: sup,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      reviewSection.classList.add("hidden");
+    });
+
+    // Export CSV
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      if (allBales.length === 0) return alert("No bales to export.");
+      const headers = ["Bale Number", "Description", "Qty / Meters", "Invoice Number", "Supplier"];
+      const rows = allBales.map((b) =>
+        [b.baleNumber, b.description, b.quantity, b.invoiceNumber, b.supplier]
+          .map((v) => `"${String(v || "").replace(/"/g, '""')}"`)
+          .join(",")
+      );
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `baletrack-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
